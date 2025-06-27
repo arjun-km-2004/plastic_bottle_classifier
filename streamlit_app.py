@@ -1,13 +1,43 @@
+import os
+import requests
 import streamlit as st
 from tensorflow.keras.models import load_model
 import tensorflow as tf
 from PIL import Image
 import numpy as np
 
-# Load models
-h5_model = load_model("models/efficient_bottle_classifier.h5", compile=False)
+# Model paths
+MODEL_DIR = "models"
+H5_MODEL_PATH = os.path.join(MODEL_DIR, "efficient_bottle_classifier.h5")
+TFLITE_MODEL_PATH = os.path.join(MODEL_DIR, "efficient_bottle_classifier.tflite")
 
-interpreter = tf.lite.Interpreter(model_path="models/efficient_bottle_classifier.tflite")
+# Make models folder
+os.makedirs(MODEL_DIR, exist_ok=True)
+
+# Google Drive direct download links
+H5_URL = "https://drive.google.com/uc?export=download&id=1ick5E5olrj9NTwY5MmW_U1DemR-CKKXA"
+TFLITE_URL = "https://drive.google.com/uc?export=download&id=1K6a1duye0tM8kqfcDqcqG5ATNiBc8xef"
+
+# Download .h5 if missing
+if not os.path.exists(H5_MODEL_PATH):
+    print("🔽 Downloading H5 model...")
+    r = requests.get(H5_URL)
+    with open(H5_MODEL_PATH, "wb") as f:
+        f.write(r.content)
+    print("✅ H5 model downloaded!")
+
+# Download .tflite if missing
+if not os.path.exists(TFLITE_MODEL_PATH):
+    print("🔽 Downloading TFLite model...")
+    r = requests.get(TFLITE_URL)
+    with open(TFLITE_MODEL_PATH, "wb") as f:
+        f.write(r.content)
+    print("✅ TFLite model downloaded!")
+
+# Load models
+h5_model = load_model(H5_MODEL_PATH, compile=False)
+
+interpreter = tf.lite.Interpreter(model_path=TFLITE_MODEL_PATH)
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
